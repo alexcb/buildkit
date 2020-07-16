@@ -34,7 +34,7 @@ func newWorkerOpt(t *testing.T, processMode oci.ProcessMode) (base.WorkerOpt, fu
 	cleanup := func() { os.RemoveAll(tmpdir) }
 
 	snFactory := SnapshotterFactory{
-		Name: "overlayfs",
+		Name: "btrfs", // TODO test both overlay and btrfs
 		New: func(root string) (ctdsnapshot.Snapshotter, error) {
 			return overlay.NewSnapshotter(root)
 		},

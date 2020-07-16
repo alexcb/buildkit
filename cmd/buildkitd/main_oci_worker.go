@@ -283,8 +283,6 @@ func snapshotterFactory(commonRoot, name string) (runc.SnapshotterFactory, error
 		logrus.Infof("auto snapshotter: using %s", name)
 	}
 
-	name = "btrfs"
-
 	snFactory := runc.SnapshotterFactory{
 		Name: name,
 	}
@@ -301,6 +299,7 @@ func snapshotterFactory(commonRoot, name string) (runc.SnapshotterFactory, error
 			return fuseoverlayfs.NewSnapshotter(root)
 		}
 	case "btrfs":
+		//panic("here")
 		snFactory.New = func(root string) (ctdsnapshot.Snapshotter, error) {
 			return btrfs.NewSnapshotter(root)
 		}

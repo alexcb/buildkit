@@ -22,7 +22,7 @@ FROM --platform=$BUILDPLATFORM tonistiigi/xx:golang@sha256:6f7d999551dd471b58f70
 # gobuild is base stage for compiling go/cgo
 FROM --platform=$BUILDPLATFORM golang:1.13-buster AS gobuild-minimal
 COPY --from=xgo / /
-RUN apt-get update && apt-get install --no-install-recommends -y libseccomp-dev file 
+RUN apt-get update && apt-get install --no-install-recommends -y libseccomp-dev file golang-github-containerd-btrfs-dev
 
 # on amd64 you can also cross-compile to other platforms
 FROM gobuild-minimal AS gobuild-cross-amd64
@@ -93,10 +93,6 @@ RUN --mount=target=. --mount=target=/root/.cache,type=cache \
 FROM buildkit-base AS buildkitd
 ARG TARGETPLATFORM
 ARG BUILDKITD_TAGS
-#RUN --mount=target=. --mount=target=/root/.cache,type=cache \
-#  --mount=target=/go/pkg/mod,type=cache \
-#  --mount=source=/tmp/.ldflags,target=/tmp/.ldflags,from=buildkit-version \
-#  apt-get update && apt-get install --no-install-recommends -y libseccomp-dev file golang-github-containerd-btrfs-dev
 RUN --mount=target=. --mount=target=/root/.cache,type=cache \
   --mount=target=/go/pkg/mod,type=cache \
   --mount=source=/tmp/.ldflags,target=/tmp/.ldflags,from=buildkit-version \

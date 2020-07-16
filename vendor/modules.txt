@@ -32,6 +32,8 @@ github.com/Microsoft/hcsshim/osversion
 github.com/apache/thrift/lib/go/thrift
 # github.com/codahale/hdrhistogram v0.0.0-20160425231609-f8ad88b59a58
 github.com/codahale/hdrhistogram
+# github.com/containerd/btrfs v0.0.0-20200117014249-153935315f4a
+github.com/containerd/btrfs
 # github.com/containerd/cgroups v0.0.0-20200327175542-b44481373989
 github.com/containerd/cgroups/stats/v1
 # github.com/containerd/console v1.0.0
@@ -96,6 +98,7 @@ github.com/containerd/containerd/services
 github.com/containerd/containerd/services/content/contentserver
 github.com/containerd/containerd/services/introspection
 github.com/containerd/containerd/snapshots
+github.com/containerd/containerd/snapshots/btrfs
 github.com/containerd/containerd/snapshots/native
 github.com/containerd/containerd/snapshots/overlay
 github.com/containerd/containerd/snapshots/proxy
