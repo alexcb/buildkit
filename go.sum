@@ -17,6 +17,8 @@ github.com/cilium/ebpf v0.0.0-20200110133405-4032b1d8aae3/go.mod h1:MA5e5Lr8slmE
 github.com/client9/misspell v0.3.4/go.mod h1:qj6jICC3Q7zFZvVWo7KLAzC3yx5G7kyvSDkc90ppPyw=
 github.com/codahale/hdrhistogram v0.0.0-20160425231609-f8ad88b59a58 h1:hHWif/4GirK3P5uvCyyj941XSVIQDzuJhbEguCICdPE=
 github.com/codahale/hdrhistogram v0.0.0-20160425231609-f8ad88b59a58/go.mod h1:sE/e/2PUdi/liOCUjSTXgM1o87ZssimdTWN964YiIeI=
+github.com/containerd/btrfs v0.0.0-20200117014249-153935315f4a h1:u5X1yvVEsXLcuTWYsFSpTgQKRvo2VTB5gOHcERpF9ZI=
+github.com/containerd/btrfs v0.0.0-20200117014249-153935315f4a/go.mod h1:9afkRVryuhYLCslfHT9CTHD26H9fzpBG298BNYnrnoI=
 github.com/containerd/cgroups v0.0.0-20190919134610-bf292b21730f/go.mod h1:OApqhQ4XNSNC13gXIwDjhOQxjWa/NxkwZXJ1EvqT0ko=
 github.com/containerd/cgroups v0.0.0-20200327175542-b44481373989 h1:ziD9Q8QdO0vybP3fYg5MQ+PqDAb61jEbdCsL2f5xXK4=
 github.com/containerd/cgroups v0.0.0-20200327175542-b44481373989/go.mod h1:CStdkl05lBnJej94BPFoJ7vB8cELKXwViS+dgfW0/M8=

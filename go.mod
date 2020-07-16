@@ -9,6 +9,7 @@ require (
 	github.com/Microsoft/go-winio v0.4.15-0.20190919025122-fc70bd9a86b5
 	github.com/apache/thrift v0.0.0-20161221203622-b2a4d4ae21c7 // indirect
 	github.com/codahale/hdrhistogram v0.0.0-20160425231609-f8ad88b59a58 // indirect
+	github.com/containerd/btrfs v0.0.0-20200117014249-153935315f4a // indirect
 	github.com/containerd/cgroups v0.0.0-20200327175542-b44481373989 // indirect
 	github.com/containerd/console v1.0.0
 	github.com/containerd/containerd v1.4.0-0

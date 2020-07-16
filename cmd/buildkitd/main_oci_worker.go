@@ -9,6 +9,7 @@ import (
 
 	fuseoverlayfs "github.com/AkihiroSuda/containerd-fuse-overlayfs"
 	ctdsnapshot "github.com/containerd/containerd/snapshots"
+	"github.com/containerd/containerd/snapshots/btrfs"
 	"github.com/containerd/containerd/snapshots/native"
 	"github.com/containerd/containerd/snapshots/overlay"
 	"github.com/containerd/containerd/sys"
@@ -282,6 +283,8 @@ func snapshotterFactory(commonRoot, name string) (runc.SnapshotterFactory, error
 		logrus.Infof("auto snapshotter: using %s", name)
 	}
 
+	name = "btrfs"
+
 	snFactory := runc.SnapshotterFactory{
 		Name: name,
 	}
@@ -296,6 +299,10 @@ func snapshotterFactory(commonRoot, name string) (runc.SnapshotterFactory, error
 		snFactory.New = func(root string) (ctdsnapshot.Snapshotter, error) {
 			// no Opt (AsynchronousRemove is untested for fuse-overlayfs)
 			return fuseoverlayfs.NewSnapshotter(root)
+		}
+	case "btrfs":
+		snFactory.New = func(root string) (ctdsnapshot.Snapshotter, error) {
+			return btrfs.NewSnapshotter(root)
 		}
 	default:
 		return snFactory, errors.Errorf("unknown snapshotter name: %q", name)
