@@ -1,6 +1,7 @@
 package source
 
 import (
+	"fmt"
 	"net/url"
 	"regexp"
 	"strings"
@@ -19,11 +20,12 @@ type GitIdentifier struct {
 
 // sshGitRegexp is used to detect if the git repo uses ssh
 // e.g. git@... or otheruser@nonstandardgithost.com:my/really/strange/repo.git
-var sshGitRegexp, _ = regexp.Compile("[a-z]+@[^/]+:.+")
+var sshGitRegexp, _ = regexp.Compile("[a-z_][a-z0-9_]*@[^/]+:.+")
 
 func NewGitIdentifier(remoteURL string) (*GitIdentifier, error) {
 	repo := GitIdentifier{}
 
+	fmt.Printf("calling NewGitIdentifier on %q\n", remoteURL)
 	var fragment string
 	if sshGitRegexp.MatchString(remoteURL) {
 		// git@.. is not an URL, so cannot be parsed as URL
