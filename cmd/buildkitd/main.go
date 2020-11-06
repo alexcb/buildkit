@@ -330,7 +330,7 @@ func serveGRPC(cfg config.GRPCConfig, server *grpc.Server, errCh chan error) err
 		func(l net.Listener) {
 			eg.Go(func() error {
 				defer l.Close()
-				logrus.Infof("running server on %s", l.Addr())
+				logrus.Infof("!!running server on %s", l.Addr())
 				return server.Serve(l)
 			})
 		}(l)
