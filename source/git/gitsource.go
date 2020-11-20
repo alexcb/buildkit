@@ -598,13 +598,13 @@ func git(ctx context.Context, dir, sshAuthSock, knownHosts string, args ...strin
 		cmd.Stdin = nil
 		cmd.Stdout = io.MultiWriter(stdout, buf)
 		cmd.Stderr = io.MultiWriter(stderr, errbuf)
-		cmd.Env = os.Environ()
-		cmd.Env = append(cmd.Env, []string{
+		cmd.Env = []string{
 			"PATH=" + os.Getenv("PATH"),
+			"HOME=" + os.Getenv("HOME"),
 			"GIT_TERMINAL_PROMPT=0",
 			"GIT_SSH_COMMAND=" + getGitSSHCommand(knownHosts),
 			//	"GIT_TRACE=1",
-		}...)
+		}
 		if sshAuthSock != "" {
 			cmd.Env = append(cmd.Env, "SSH_AUTH_SOCK="+sshAuthSock)
 		}
