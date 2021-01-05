@@ -118,20 +118,24 @@ func newDockerAuthorizer(client *http.Client, handlers *authHandlerNS, sm *sessi
 
 // Authorize handles auth request.
 func (a *dockerAuthorizer) Authorize(ctx context.Context, req *http.Request) error {
+	fmt.Printf("-=-==- Authorize()\n")
 	a.handlers.mu.Lock()
 	defer a.handlers.mu.Unlock()
 
 	// skip if there is no auth handler
 	ah := a.handlers.get(req.URL.Host, a.sm, a.session)
 	if ah == nil {
+		fmt.Printf("nil return\n")
 		return nil
 	}
 
 	auth, err := ah.authorize(ctx, a.sm, a.session)
 	if err != nil {
+		fmt.Printf("err return\n")
 		return err
 	}
 
+	fmt.Printf("ok return\n")
 	req.Header.Set("Authorization", auth)
 	return nil
 }
@@ -284,6 +288,7 @@ func (ah *authHandler) doBasicAuth(ctx context.Context) (string, error) {
 }
 
 func (ah *authHandler) doBearerAuth(ctx context.Context, sm *session.Manager, g session.Group) (token string, err error) {
+	fmt.Printf("in doBearerAuth()\n")
 	// copy common tokenOptions
 	to := ah.common
 
@@ -310,6 +315,7 @@ func (ah *authHandler) doBearerAuth(ctx context.Context, sm *session.Manager, g 
 		}
 		if !errors.Is(r.err, context.Canceled) &&
 			(r.expires.IsZero() || r.expires.After(time.Now())) {
+			fmt.Printf("returning cached err: %v; error expires at: %v\n", r.err, r.expires)
 			return r.token, r.err
 		}
 		// r.err is canceled or token expired. Get rid of it and try again
@@ -319,6 +325,8 @@ func (ah *authHandler) doBearerAuth(ctx context.Context, sm *session.Manager, g 
 			delete(ah.scopedTokens, scoped)
 		}
 	}
+
+	fmt.Printf("..here1\n")
 
 	// only one fetch token job
 	r := new(authResult)
@@ -338,6 +346,9 @@ func (ah *authHandler) doBearerAuth(ctx context.Context, sm *session.Manager, g 
 			if exp := issuedAt.Add(time.Duration(float64(expires)*0.9) * time.Second); time.Now().Before(exp) {
 				r.expires = exp
 			}
+		} else {
+			// there was an error with auth, cache the failure for 1 second
+			r.expires = time.Now().Add(time.Second)
 		}
 		r.Done()
 	}()
@@ -351,16 +362,20 @@ func (ah *authHandler) doBearerAuth(ctx context.Context, sm *session.Manager, g 
 			Scopes:   to.Scopes,
 		}, sm, g)
 		if err != nil {
+
+			fmt.Printf("..here3\n")
 			return "", err
 		}
 		issuedAt, expires = time.Unix(resp.IssuedAt, 0), int(resp.ExpiresIn)
+
+		fmt.Printf("..here4\n")
 		return resp.Token, nil
 	}
 
 	// fetch token for the resource scope
 	if to.Secret != "" {
 		defer func() {
-			err = errors.Wrap(err, "failed to fetch oauth token")
+			err = errors.Wrap(err, "failed to fetch oauth token 2")
 		}()
 		// try GET first because Docker Hub does not support POST
 		// switch once support has landed
@@ -374,6 +389,8 @@ func (ah *authHandler) doBearerAuth(ctx context.Context, sm *session.Manager, g 
 				if (errStatus.StatusCode == 405 && to.Username != "") || errStatus.StatusCode == 404 || errStatus.StatusCode == 401 {
 					resp, err := auth.FetchTokenWithOAuth(ctx, ah.client, nil, "buildkit-client", to)
 					if err != nil {
+
+						fmt.Printf("..here5\n")
 						return "", err
 					}
 					issuedAt, expires = resp.IssuedAt, resp.ExpiresIn
@@ -384,6 +401,8 @@ func (ah *authHandler) doBearerAuth(ctx context.Context, sm *session.Manager, g 
 					"body":   string(errStatus.Body),
 				}).Debugf("token request failed")
 			}
+
+			fmt.Printf("..here6\n")
 			return "", err
 		}
 		issuedAt, expires = resp.IssuedAt, resp.ExpiresIn
@@ -392,6 +411,8 @@ func (ah *authHandler) doBearerAuth(ctx context.Context, sm *session.Manager, g 
 	// do request anonymously
 	resp, err := auth.FetchToken(ctx, ah.client, nil, to)
 	if err != nil {
+		fmt.Printf("..here7\n")
+
 		return "", errors.Wrap(err, "failed to fetch anonymous token")
 	}
 	issuedAt, expires = resp.IssuedAt, resp.ExpiresIn

@@ -10,6 +10,7 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"runtime/debug"
 	"strconv"
 	"strings"
 	"sync"
@@ -60,6 +61,7 @@ func (ap *authProvider) Register(server *grpc.Server) {
 	auth.RegisterAuthServer(server, ap)
 }
 
+// TODO ACB this is where the auth request happens
 func (ap *authProvider) FetchToken(ctx context.Context, req *auth.FetchTokenRequest) (rr *auth.FetchTokenResponse, err error) {
 	creds, err := ap.credentials(req.Host)
 	if err != nil {
@@ -79,7 +81,8 @@ func (ap *authProvider) FetchToken(ctx context.Context, req *auth.FetchTokenRequ
 			return err
 		}
 		defer func() {
-			err = errors.Wrap(err, "failed to fetch oauth token")
+			debug.PrintStack()
+			err = errors.Wrap(err, "failed to fetch oauth token 1") // this is failing when auth.docker.io fails
 		}()
 		ap.mu.Lock()
 		name := fmt.Sprintf("[auth] %v token for %s", strings.Join(trimScopePrefix(req.Scopes), " "), req.Host)
@@ -91,20 +94,26 @@ func (ap *authProvider) FetchToken(ctx context.Context, req *auth.FetchTokenRequ
 		// switch once support has landed
 		resp, err := authutil.FetchToken(ctx, http.DefaultClient, nil, to)
 		if err != nil {
+			fmt.Printf("here1 with %v\n", err)
 			var errStatus remoteserrors.ErrUnexpectedStatus
 			if errors.As(err, &errStatus) {
+				fmt.Printf("here2 with %v\n", err)
 				// retry with POST request
 				// As of September 2017, GCR is known to return 404.
 				// As of February 2018, JFrog Artifactory is known to return 401.
 				if (errStatus.StatusCode == 405 && to.Username != "") || errStatus.StatusCode == 404 || errStatus.StatusCode == 401 {
 					resp, err := authutil.FetchTokenWithOAuth(ctx, http.DefaultClient, nil, "buildkit-client", to)
 					if err != nil {
+						fmt.Printf("here3 with %v\n", err)
 						return nil, err
 					}
 
+					fmt.Printf("here4 with %v\n", err)
 					return toTokenResponse(resp.AccessToken, resp.IssuedAt, resp.ExpiresIn), nil
 				}
 			}
+
+			fmt.Printf("here5 with %v\n", err)
 			return nil, err
 		}
 		return toTokenResponse(resp.Token, resp.IssuedAt, resp.ExpiresIn), nil

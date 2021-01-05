@@ -3,7 +3,9 @@ package auth
 import (
 	"context"
 	"crypto/subtle"
+	"fmt"
 	"math/rand"
+	"runtime/debug"
 	"sync"
 
 	"github.com/moby/buildkit/session"
@@ -53,6 +55,8 @@ func CredentialsFunc(sm *session.Manager, g session.Group) func(string) (session
 }
 
 func FetchToken(req *FetchTokenRequest, sm *session.Manager, g session.Group) (resp *FetchTokenResponse, err error) {
+	fmt.Printf("=-=-=-=-=-=-=-=-started in FetchToken()\n")
+	debug.PrintStack()
 	err = sm.Any(context.TODO(), g, func(ctx context.Context, id string, c session.Caller) error {
 		client := NewAuthClient(c.Conn())
 

@@ -647,6 +647,10 @@ func newWorkerController(c *cli.Context, wiOpt workerInitializerOpt) (*worker.Co
 		for _, w := range ws {
 			p := formatPlatforms(w.Platforms(false))
 			logrus.Infof("found worker %q, labels=%v, platforms=%v", w.ID(), w.Labels(), p)
+			logrus.Debug("hello debug world")
+			logrus.Info("hello info world")
+			logrus.Warn("hello warn world")
+			logrus.Error("hello error world")
 			archutil.WarnIfUnsupported(p)
 			if err = wc.Add(w); err != nil {
 				return nil, err
