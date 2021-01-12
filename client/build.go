@@ -2,6 +2,7 @@ package client
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/moby/buildkit/client/buildid"
 	gateway "github.com/moby/buildkit/frontend/gateway/client"
@@ -83,6 +84,7 @@ func (g *gatewayClientForBuild) ResolveImageConfig(ctx context.Context, in *gate
 
 func (g *gatewayClientForBuild) Solve(ctx context.Context, in *gatewayapi.SolveRequest, opts ...grpc.CallOption) (*gatewayapi.SolveResponse, error) {
 	ctx = buildid.AppendToOutgoingContext(ctx, g.buildID)
+	fmt.Printf("calling g.gateway.Solve\n")
 	return g.gateway.Solve(ctx, in, opts...)
 }
 
@@ -109,6 +111,7 @@ func (g *gatewayClientForBuild) StatFile(ctx context.Context, in *gatewayapi.Sta
 
 func (g *gatewayClientForBuild) Ping(ctx context.Context, in *gatewayapi.PingRequest, opts ...grpc.CallOption) (*gatewayapi.PongResponse, error) {
 	ctx = buildid.AppendToOutgoingContext(ctx, g.buildID)
+	fmt.Printf("calling g.gateway.Ping\n")
 	return g.gateway.Ping(ctx, in, opts...)
 }
 

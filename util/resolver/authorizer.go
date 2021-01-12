@@ -5,10 +5,12 @@ import (
 	"encoding/base64"
 	"fmt"
 	"net/http"
+	"reflect"
 	"sort"
 	"strings"
 	"sync"
 	"time"
+	"unsafe"
 
 	"github.com/containerd/containerd/errdefs"
 	"github.com/containerd/containerd/log"
@@ -283,6 +285,33 @@ func (ah *authHandler) doBasicAuth(ctx context.Context) (string, error) {
 	return fmt.Sprintf("Basic %s", auth), nil
 }
 
+func printContextInternals(ctx interface{}, inner bool) {
+	contextValues := reflect.ValueOf(ctx).Elem()
+	contextKeys := reflect.TypeOf(ctx).Elem()
+
+	if !inner {
+		fmt.Printf("\nFields for %s.%s\n", contextKeys.PkgPath(), contextKeys.Name())
+	}
+
+	if contextKeys.Kind() == reflect.Struct {
+		for i := 0; i < contextValues.NumField(); i++ {
+			reflectValue := contextValues.Field(i)
+			reflectValue = reflect.NewAt(reflectValue.Type(), unsafe.Pointer(reflectValue.UnsafeAddr())).Elem()
+
+			reflectField := contextKeys.Field(i)
+
+			if reflectField.Name == "Context" {
+				printContextInternals(reflectValue.Interface(), true)
+			} else {
+				fmt.Printf("field name: %+v\n", reflectField.Name)
+				fmt.Printf("value: %+v\n", reflectValue.Interface())
+			}
+		}
+	} else {
+		fmt.Printf("context is empty (int)\n")
+	}
+}
+
 func (ah *authHandler) doBearerAuth(ctx context.Context, sm *session.Manager, g session.Group) (token string, err error) {
 	// copy common tokenOptions
 	to := ah.common
@@ -341,6 +370,7 @@ func (ah *authHandler) doBearerAuth(ctx context.Context, sm *session.Manager, g 
 		} else if r.expires.IsZero() {
 			// if an error occurs cache it for 1 second rather than forever
 			r.expires = time.Now().Add(time.Second)
+			printContextInternals(ctx, false)
 		}
 		r.Done()
 	}()

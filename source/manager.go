@@ -2,6 +2,8 @@ package source
 
 import (
 	"context"
+	"fmt"
+	"runtime/debug"
 	"sync"
 
 	"github.com/moby/buildkit/cache"
@@ -32,6 +34,7 @@ func NewManager() (*Manager, error) {
 }
 
 func (sm *Manager) Register(src Source) {
+	fmt.Printf("Register(%v)\n%s\n", src.ID(), debug.Stack())
 	sm.mu.Lock()
 	sm.sources[src.ID()] = src
 	sm.mu.Unlock()

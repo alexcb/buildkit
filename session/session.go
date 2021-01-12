@@ -2,6 +2,7 @@ package session
 
 import (
 	"context"
+	"fmt"
 	"net"
 	"strings"
 
@@ -86,6 +87,7 @@ func NewSession(ctx context.Context, name, sharedKey string) (*Session, error) {
 
 // Allow enables a given service to be reachable through the grpc session
 func (s *Session) Allow(a Attachable) {
+	fmt.Printf("registering service on callback grpc server: %v\n", a)
 	a.Register(s.grpcServer)
 }
 
@@ -113,6 +115,7 @@ func (s *Session) Run(ctx context.Context, dialer Dialer) error {
 			meta[headerSessionMethod] = append(meta[headerSessionMethod], MethodURL(name, method.Name))
 		}
 	}
+	fmt.Printf("dialing h2c reverse connection %v\n", meta)
 	conn, err := dialer(ctx, "h2c", meta)
 	if err != nil {
 		return errors.Wrap(err, "failed to dial gRPC")

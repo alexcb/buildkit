@@ -2,6 +2,8 @@ package gateway
 
 import (
 	"context"
+	"fmt"
+	"runtime/debug"
 	"sync"
 	"time"
 
@@ -38,6 +40,7 @@ func (gwf *GatewayForwarder) RegisterBuild(ctx context.Context, id string, bridg
 		return errors.Errorf("build ID %s exists", id)
 	}
 
+	fmt.Printf("Adding job to gateway forwarder %v -> %v\n", id, bridge)
 	gwf.builds[id] = bridge
 	gwf.updateCond.Broadcast()
 
@@ -48,6 +51,7 @@ func (gwf *GatewayForwarder) UnregisterBuild(ctx context.Context, id string) {
 	gwf.mu.Lock()
 	defer gwf.mu.Unlock()
 
+	fmt.Printf("deleting job from gateway forwarder %v\n", id)
 	delete(gwf.builds, id)
 	gwf.updateCond.Broadcast()
 }
@@ -81,6 +85,7 @@ func (gwf *GatewayForwarder) lookupForwarder(ctx context.Context) (gateway.LLBBr
 			gwf.updateCond.Wait()
 			continue
 		}
+		fmt.Printf("got job from gateway forwarder %v\n%s", bid, debug.Stack())
 		return fwd, nil
 	}
 }
@@ -95,6 +100,7 @@ func (gwf *GatewayForwarder) ResolveImageConfig(ctx context.Context, req *gwapi.
 }
 
 func (gwf *GatewayForwarder) Solve(ctx context.Context, req *gwapi.SolveRequest) (*gwapi.SolveResponse, error) {
+	fmt.Printf("handling Solve in GatewayForwarder for %v\n", req)
 	fwd, err := gwf.lookupForwarder(ctx)
 	if err != nil {
 		return nil, errors.Wrap(err, "forwarding Solve")

@@ -2,6 +2,8 @@ package ops
 
 import (
 	"context"
+	"fmt"
+	"runtime/debug"
 	"strings"
 	"sync"
 
@@ -87,9 +89,11 @@ func (s *sourceOp) Exec(ctx context.Context, g session.Group, _ []solver.Result)
 	if err != nil {
 		return nil, err
 	}
+	fmt.Printf("in source.go sourceOp.Exec() about to call snapshot on %v %v %T %T\n", s, src, s, src)
 	ref, err := src.Snapshot(ctx, g)
 	if err != nil {
 		return nil, err
 	}
+	fmt.Printf("got snapshot ref %v %T\n%s\n", ref, ref, debug.Stack())
 	return []solver.Result{worker.NewWorkerRefResult(ref, s.w)}, nil
 }

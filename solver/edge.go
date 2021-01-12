@@ -2,6 +2,7 @@ package solver
 
 import (
 	"context"
+	"fmt"
 	"sync"
 	"time"
 
@@ -888,10 +889,15 @@ func (e *edge) loadCache(ctx context.Context) (interface{}, error) {
 
 // execOp creates a request to execute the vertex operation
 func (e *edge) execOp(ctx context.Context) (interface{}, error) {
+	fmt.Printf("entered solver/edge.go execOp() for %v\n\n", e)
 	cacheKeys, inputs := e.commitOptions()
 	results, subExporters, err := e.op.Exec(ctx, toResultSlice(inputs))
 	if err != nil {
 		return nil, errors.WithStack(err)
+	}
+	fmt.Printf("first step of solver/edge.go execOp() for %v done; results: %v\n", e, results)
+	for i, x := range results {
+		fmt.Printf("%d: %T %v\n", i, x, x)
 	}
 
 	index := e.edge.Index

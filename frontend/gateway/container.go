@@ -134,6 +134,7 @@ type MakeMutable func(m *opspb.Mount, ref cache.ImmutableRef) (cache.MutableRef,
 func PrepareMounts(ctx context.Context, mm *mounts.MountManager, cm cache.Manager, g session.Group, mnts []*opspb.Mount, refs []*worker.WorkerRef, makeMutable MakeMutable) (p PreparedMounts, err error) {
 	// loop over all mounts, fill in mounts, root and outputs
 	for i, m := range mnts {
+		fmt.Printf("in PrepareMounts: type: %v; dest: %v\n", m.MountType, m.Dest)
 		var (
 			mountable cache.Mountable
 			ref       cache.ImmutableRef

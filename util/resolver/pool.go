@@ -190,6 +190,7 @@ func (r *Resolver) Resolve(ctx context.Context, ref string) (string, ocispec.Des
 		}
 	}
 
+	fmt.Printf("calling Resolve(%v)\n", ref)
 	n, desc, err := r.Resolver.Resolve(ctx, ref)
 	if err == nil {
 		atomic.AddInt64(&r.handler.counter, 1)

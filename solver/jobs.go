@@ -3,6 +3,7 @@ package solver
 import (
 	"context"
 	"fmt"
+	"runtime/debug"
 	"strings"
 	"sync"
 	"time"
@@ -425,6 +426,7 @@ func (jl *Solver) connectProgressFromState(target, src *state) {
 }
 
 func (jl *Solver) NewJob(id string) (*Job, error) {
+	fmt.Printf("entered NewJob(%v)\n%s\n", id, debug.Stack())
 	jl.mu.Lock()
 	defer jl.mu.Unlock()
 

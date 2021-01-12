@@ -2,6 +2,7 @@ package cache
 
 import (
 	"context"
+	"fmt"
 	"sort"
 	"sync"
 	"time"
@@ -506,6 +507,10 @@ func (cm *cacheManager) New(ctx context.Context, s ImmutableRef, sess session.Gr
 		}
 	}()
 
+	fmt.Printf("----here %v\n", cm)
+	fmt.Printf("----here1 %v\n", cm.ManagerOpt)
+	fmt.Printf("----here2 %v\n", cm.ManagerOpt.Snapshotter)
+	fmt.Printf("----here3 %v\n", cm.ManagerOpt.Snapshotter.Name())
 	if err := cm.ManagerOpt.LeaseManager.AddResource(ctx, l, leases.Resource{
 		ID:   id,
 		Type: "snapshots/" + cm.ManagerOpt.Snapshotter.Name(),

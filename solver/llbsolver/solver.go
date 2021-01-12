@@ -69,10 +69,24 @@ func New(wc *worker.Controller, f map[string]frontend.Frontend, cache solver.Cac
 
 func (s *Solver) resolver() solver.ResolveOpFunc {
 	return func(v solver.Vertex, b solver.Builder) (solver.Op, error) {
+		fmt.Printf("resolving a worker to use\n")
 		w, err := s.resolveWorker()
 		if err != nil {
 			return nil, err
 		}
+
+		workers, err := s.workerController.List()
+		if err != nil {
+			return nil, err
+		}
+		for _, x := range workers {
+			if strings.Contains(fmt.Sprintf("%v", x.Labels()), "localhost") {
+				fmt.Printf("overriding worker to: %v\n", x)
+				w = x
+			}
+		}
+
+		fmt.Printf("calling w.ResolveOp which will call ops.NewExecOp\n")
 		return w.ResolveOp(v, s.Bridge(b), s.sm)
 	}
 }
@@ -90,6 +104,7 @@ func (s *Solver) Bridge(b solver.Builder) frontend.FrontendLLBBridge {
 }
 
 func (s *Solver) Solve(ctx context.Context, id string, sessionID string, req frontend.SolveRequest, exp ExporterRequest, ent []entitlements.Entitlement) (*client.SolveResponse, error) {
+	fmt.Printf("handling Solve for %v %v %v\n", id, sessionID, req)
 	j, err := s.solver.NewJob(id)
 	if err != nil {
 		return nil, err
@@ -107,9 +122,11 @@ func (s *Solver) Solve(ctx context.Context, id string, sessionID string, req fro
 
 	var res *frontend.Result
 	if s.gatewayForwarder != nil && req.Definition == nil && req.Frontend == "" {
+		fmt.Printf("setting up bridge forwarder for %v %v %v\n", j, req, sessionID)
 		fwd := gateway.NewBridgeForwarder(ctx, s.Bridge(j), s.workerController, req.FrontendInputs, sessionID, s.sm)
 		defer fwd.Discard()
 		if err := s.gatewayForwarder.RegisterBuild(ctx, id, fwd); err != nil {
+			fmt.Printf("done in solver.Solve1 with %v\n", err)
 			return nil, err
 		}
 		defer s.gatewayForwarder.UnregisterBuild(ctx, id)
@@ -122,14 +139,17 @@ func (s *Solver) Solve(ctx context.Context, id string, sessionID string, req fro
 			err = ctx.Err()
 		}
 		if err != nil {
+			fmt.Printf("done in solver.Solve2 with %v\n", err)
 			return nil, err
 		}
 	} else {
+		fmt.Printf("calling bridge.solve with %v %v %v\n", j, req, sessionID)
 		res, err = s.Bridge(j).Solve(ctx, req, sessionID)
 		if err != nil {
 			return nil, err
 		}
 	}
+	fmt.Printf("done in solver.Solve3; res: %v\n", res)
 
 	if res == nil {
 		res = &frontend.Result{}
@@ -154,6 +174,7 @@ func (s *Solver) Solve(ctx context.Context, id string, sessionID string, req fro
 		return nil, err
 	}
 
+	fmt.Printf("handling export\n")
 	var exporterResponse map[string]string
 	if e := exp.Exporter; e != nil {
 		inp := exporter.Source{
@@ -308,6 +329,7 @@ func (s *Solver) Status(ctx context.Context, id string, statusChan chan *client.
 
 func defaultResolver(wc *worker.Controller) ResolveWorkerFunc {
 	return func() (worker.Worker, error) {
+		fmt.Printf("using default resolver\n")
 		return wc.GetDefault()
 	}
 }

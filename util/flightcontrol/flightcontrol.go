@@ -2,8 +2,10 @@ package flightcontrol
 
 import (
 	"context"
+	"fmt"
 	"io"
 	"runtime"
+	"runtime/debug"
 	"sort"
 	"sync"
 	"time"
@@ -32,6 +34,7 @@ type Group struct {
 
 // Do executes a context function syncronized by the key
 func (g *Group) Do(ctx context.Context, key string, fn func(ctx context.Context) (interface{}, error)) (v interface{}, err error) {
+	fmt.Printf("flightcontrol:Do/Call(%v)\n%s\n", fn, debug.Stack())
 	var backoff time.Duration
 	for {
 		v, err = g.do(ctx, key, fn)

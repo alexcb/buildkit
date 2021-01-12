@@ -1,6 +1,8 @@
 package worker
 
 import (
+	"fmt"
+	"runtime/debug"
 	"sync"
 
 	"github.com/containerd/containerd/filters"
@@ -18,9 +20,11 @@ type Controller struct {
 
 // Add adds a local worker
 func (c *Controller) Add(w Worker) error {
+	fmt.Printf("storing worker %v\n%s\n", w.ID(), debug.Stack())
 	c.workers.Store(w.ID(), w)
 	if c.defaultID == "" {
 		c.defaultID = w.ID()
+		fmt.Printf("default Worker set to %v\n", w.ID())
 	}
 	return nil
 }
@@ -47,10 +51,12 @@ func (c *Controller) GetDefault() (Worker, error) {
 	if c.defaultID == "" {
 		return nil, errors.Errorf("no default worker")
 	}
+	//fmt.Printf("returning worker %v\n%s\n", c.defaultID, debug.Stack())
 	return c.Get(c.defaultID)
 }
 
 func (c *Controller) Get(id string) (Worker, error) {
+	fmt.Printf("get worker %v default=%v\n%s\n", id, id == c.defaultID, debug.Stack())
 	v, ok := c.workers.Load(id)
 	if !ok {
 		return nil, errors.Errorf("worker %s not found", id)

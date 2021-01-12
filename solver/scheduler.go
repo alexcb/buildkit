@@ -2,6 +2,7 @@ package solver
 
 import (
 	"context"
+	"fmt"
 	"os"
 	"sync"
 
@@ -107,6 +108,7 @@ func (s *scheduler) loop() {
 
 // dispatch schedules an edge to be processed
 func (s *scheduler) dispatch(e *edge) {
+	fmt.Printf("dispatch(%v)\n", e)
 	inc := make([]pipe.Sender, len(s.incoming[e]))
 	for i, p := range s.incoming[e] {
 		inc[i] = p.Sender
@@ -357,6 +359,7 @@ func (pf *pipeFactory) NewInputRequest(ee Edge, req *edgeRequest) pipe.Receiver 
 }
 
 func (pf *pipeFactory) NewFuncRequest(f func(context.Context) (interface{}, error)) pipe.Receiver {
+	fmt.Printf("enter NewFuncRequest(%v, %v)\n", pf.e, f)
 	p := pf.s.newRequestWithFunc(pf.e, f)
 	if debugScheduler {
 		logrus.Debugf("> newFunc %p", p)

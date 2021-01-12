@@ -1288,7 +1288,7 @@ func serve(ctx context.Context, grpcServer *grpc.Server, conn net.Conn) {
 		<-ctx.Done()
 		conn.Close()
 	}()
-	logrus.Debugf("serving grpc connection")
+	logrus.Debugf("serving grpc connection (in gateway.go)")
 	(&http2.Server{}).ServeConn(conn, &http2.ServeConnOpts{Handler: grpcServer})
 }
 

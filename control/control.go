@@ -2,6 +2,8 @@ package control
 
 import (
 	"context"
+	"fmt"
+	"strings"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -214,6 +216,7 @@ func translateLegacySolveRequest(req *controlapi.SolveRequest) error {
 }
 
 func (c *Controller) Solve(ctx context.Context, req *controlapi.SolveRequest) (*controlapi.SolveResponse, error) {
+	fmt.Printf("entering Controller.Solve with %v\n", req)
 	atomic.AddInt64(&c.buildCount, 1)
 	defer atomic.AddInt64(&c.buildCount, -1)
 
@@ -232,6 +235,19 @@ func (c *Controller) Solve(ctx context.Context, req *controlapi.SolveRequest) (*
 	if err != nil {
 		return nil, err
 	}
+
+	// ACB
+	workers, err := c.opt.WorkerController.List()
+	if err != nil {
+		return nil, err
+	}
+	for _, x := range workers {
+		if strings.Contains(fmt.Sprintf("%v", x.Labels()), "localhost") {
+			fmt.Printf("overriding worker to: %v\n", x)
+			w = x
+		}
+	}
+
 	if req.Exporter != "" {
 		exp, err := w.Exporter(req.Exporter, c.opt.SessionManager)
 		if err != nil {

@@ -3,10 +3,12 @@ package runcexecutor
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"io"
 	"os"
 	"os/exec"
 	"path/filepath"
+	"runtime/debug"
 	"strings"
 	"sync"
 	"syscall"
@@ -130,6 +132,7 @@ func New(opt Opt, networkProviders map[pb.NetMode]network.Provider) (executor.Ex
 
 func (w *runcExecutor) Run(ctx context.Context, id string, root executor.Mount, mounts []executor.Mount, process executor.ProcessInfo, started chan<- struct{}) (err error) {
 	meta := process.Meta
+	fmt.Printf("entered runcExecutor.Run with %v; root: %v, mounts: %v; pid: %v\n%s\n", meta, root, mounts, os.Getpid(), debug.Stack())
 
 	startedOnce := sync.Once{}
 	done := make(chan error, 1)
