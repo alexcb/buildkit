@@ -2,6 +2,8 @@ package control
 
 import (
 	"context"
+	"fmt"
+	"strings"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -232,6 +234,22 @@ func (c *Controller) Solve(ctx context.Context, req *controlapi.SolveRequest) (*
 	if err != nil {
 		return nil, err
 	}
+
+	// ACB
+	override := false
+	if override {
+		workers, err := c.opt.WorkerController.List()
+		if err != nil {
+			return nil, err
+		}
+		for _, x := range workers {
+			if strings.Contains(fmt.Sprintf("%v", x.Labels()), "localhost") {
+				fmt.Printf("(2) overriding worker to: %v (2)\n", x)
+				w = x
+			}
+		}
+	}
+
 	if req.Exporter != "" {
 		exp, err := w.Exporter(req.Exporter, c.opt.SessionManager)
 		if err != nil {

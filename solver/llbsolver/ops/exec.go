@@ -11,6 +11,9 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/moby/buildkit/executor/localhostexecutor"
+	"github.com/moby/buildkit/session/localhost"
+
 	"github.com/containerd/containerd/platforms"
 	"github.com/moby/buildkit/cache"
 	"github.com/moby/buildkit/cache/metadata"
@@ -22,6 +25,7 @@ import (
 	"github.com/moby/buildkit/solver/llbsolver/errdefs"
 	"github.com/moby/buildkit/solver/llbsolver/mounts"
 	"github.com/moby/buildkit/solver/pb"
+	//"github.com/moby/buildkit/util/contextutil"
 	"github.com/moby/buildkit/util/progress/logs"
 	utilsystem "github.com/moby/buildkit/util/system"
 	"github.com/moby/buildkit/worker"
@@ -41,12 +45,18 @@ type execOp struct {
 	w         worker.Worker
 	platform  *pb.Platform
 	numInputs int
+	sm        *session.Manager
 }
 
 func NewExecOp(v solver.Vertex, op *pb.Op_Exec, platform *pb.Platform, cm cache.Manager, sm *session.Manager, md *metadata.Store, exec executor.Executor, w worker.Worker) (solver.Op, error) {
 	if err := llbsolver.ValidateOp(&pb.Op{Op: op}); err != nil {
 		return nil, err
 	}
+
+	if lhe, ok := exec.(*localhostexecutor.LocalhostExecutor); ok {
+		lhe.SetSessionManager(sm)
+	}
+
 	name := fmt.Sprintf("exec %s", strings.Join(op.Exec.Meta.Args, " "))
 	return &execOp{
 		op:        op.Exec,
@@ -56,6 +66,7 @@ func NewExecOp(v solver.Vertex, op *pb.Op_Exec, platform *pb.Platform, cm cache.
 		numInputs: len(v.Inputs()),
 		w:         w,
 		platform:  platform,
+		sm:        sm,
 	}, nil
 }
 
@@ -215,6 +226,15 @@ func addDefaultEnvvar(env []string, k, v string) []string {
 }
 
 func (e *execOp) Exec(ctx context.Context, g session.Group, inputs []solver.Result) (results []solver.Result, err error) {
+	for _, x := range inputs {
+		fmt.Printf("%v\n", x.ID())
+		fmt.Printf("%T\n", x.Sys())
+		xx, ok := x.Sys().(*worker.WorkerRef)
+		if !ok {
+			return nil, errors.Errorf("invalid reference for exec %T", x.Sys())
+		}
+		fmt.Printf("sub ref: %v\n", xx.ID())
+	}
 	refs := make([]*worker.WorkerRef, len(inputs))
 	for i, inp := range inputs {
 		var ok bool
@@ -224,10 +244,18 @@ func (e *execOp) Exec(ctx context.Context, g session.Group, inputs []solver.Resu
 		}
 	}
 
+	isLocal := false
+	for _, mnt := range e.op.Mounts {
+		if mnt.Dest == "/run_on_localhost_hack" {
+			isLocal = true
+		}
+	}
+
 	p, err := gateway.PrepareMounts(ctx, e.mm, e.cm, g, e.op.Mounts, refs, func(m *pb.Mount, ref cache.ImmutableRef) (cache.MutableRef, error) {
 		desc := fmt.Sprintf("mount %s from exec %s", m.Dest, strings.Join(e.op.Meta.Args, " "))
 		return e.cm.New(ctx, ref, g, cache.WithDescription(desc))
 	})
+
 	defer func() {
 		if err != nil {
 			execInputs := make([]solver.Result, len(e.op.Mounts))
@@ -311,6 +339,40 @@ func (e *execOp) Exec(ctx context.Context, g session.Group, inputs []solver.Resu
 	defer stdout.Close()
 	defer stderr.Close()
 
+	// TODO move this logic elsewhere
+
+	if isLocal {
+		err := e.sm.Any(ctx, g, func(ctx context.Context, _ string, caller session.Caller) error {
+			err := localhost.LocalhostExec(ctx, caller, executor.ProcessInfo{
+				Meta:   meta,
+				Stdin:  nil,
+				Stdout: stdout,
+				Stderr: stderr,
+			})
+			if err != nil {
+				return err
+			}
+			return nil
+		})
+		if err != nil {
+			return nil, err
+		}
+		meta = executor.Meta{
+			Args:           []string{"/bin/true"}, // override command to a no-op
+			Env:            e.op.Meta.Env,
+			Cwd:            "/",
+			User:           e.op.Meta.User,
+			Hostname:       e.op.Meta.Hostname,
+			ReadonlyRootFS: p.ReadonlyRootFS,
+			ExtraHosts:     extraHosts,
+			NetMode:        e.op.Network,
+			SecurityMode:   e.op.Security,
+		}
+	}
+	if lhe, ok := e.exec.(*localhostexecutor.LocalhostExecutor); ok {
+		lhe.SetSessionGroup(g)
+	}
+	//contextutil.PrintContextValues(ctx)
 	execErr := e.exec.Run(ctx, "", p.Root, p.Mounts, executor.ProcessInfo{
 		Meta:   meta,
 		Stdin:  nil,
