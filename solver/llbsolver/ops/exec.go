@@ -5,11 +5,14 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net"
 	"os"
 	"path"
 	"sort"
 	"strings"
+
+	"github.com/moby/buildkit/session/localhost"
 
 	"github.com/containerd/containerd/platforms"
 	"github.com/moby/buildkit/cache"
@@ -41,12 +44,14 @@ type execOp struct {
 	w         worker.Worker
 	platform  *pb.Platform
 	numInputs int
+	sm        *session.Manager
 }
 
 func NewExecOp(v solver.Vertex, op *pb.Op_Exec, platform *pb.Platform, cm cache.Manager, sm *session.Manager, md *metadata.Store, exec executor.Executor, w worker.Worker) (solver.Op, error) {
 	if err := llbsolver.ValidateOp(&pb.Op{Op: op}); err != nil {
 		return nil, err
 	}
+
 	name := fmt.Sprintf("exec %s", strings.Join(op.Exec.Meta.Args, " "))
 	return &execOp{
 		op:        op.Exec,
@@ -56,6 +61,7 @@ func NewExecOp(v solver.Vertex, op *pb.Op_Exec, platform *pb.Platform, cm cache.
 		numInputs: len(v.Inputs()),
 		w:         w,
 		platform:  platform,
+		sm:        sm,
 	}, nil
 }
 
@@ -228,6 +234,7 @@ func (e *execOp) Exec(ctx context.Context, g session.Group, inputs []solver.Resu
 		desc := fmt.Sprintf("mount %s from exec %s", m.Dest, strings.Join(e.op.Meta.Args, " "))
 		return e.cm.New(ctx, ref, g, cache.WithDescription(desc))
 	})
+
 	defer func() {
 		if err != nil {
 			execInputs := make([]solver.Result, len(e.op.Mounts))
@@ -311,6 +318,14 @@ func (e *execOp) Exec(ctx context.Context, g session.Group, inputs []solver.Resu
 	defer stdout.Close()
 	defer stderr.Close()
 
+	newMeta, isLocal, err := e.doFromLocalHack(ctx, g, meta, stdout, stderr)
+	if err != nil {
+		return nil, err
+	}
+	if isLocal {
+		meta = newMeta
+	}
+
 	execErr := e.exec.Run(ctx, "", p.Root, p.Mounts, executor.ProcessInfo{
 		Meta:   meta,
 		Stdin:  nil,
@@ -332,6 +347,39 @@ func (e *execOp) Exec(ctx context.Context, g session.Group, inputs []solver.Resu
 		p.OutputRefs[i].Ref = nil
 	}
 	return results, errors.Wrapf(execErr, "executor failed running %v", e.op.Meta.Args)
+}
+
+func (e *execOp) doFromLocalHack(ctx context.Context, g session.Group, meta executor.Meta, stdout, stderr io.WriteCloser) (executor.Meta, bool, error) {
+	isLocal := false
+	for _, mnt := range e.op.Mounts {
+		if mnt.Dest == "/run_on_localhost_hack" {
+			isLocal = true
+		}
+	}
+	if !isLocal {
+		return executor.Meta{}, false, nil
+	}
+
+	err := e.sm.Any(ctx, g, func(ctx context.Context, _ string, caller session.Caller) error {
+		err := localhost.LocalhostExec(ctx, caller, executor.ProcessInfo{
+			Meta:   meta,
+			Stdin:  nil,
+			Stdout: stdout,
+			Stderr: stderr,
+		})
+		if err != nil {
+			return err
+		}
+		return nil
+	})
+	if err != nil {
+		return executor.Meta{}, false, err
+	}
+	fakeMeta := meta
+	fakeMeta.Args = []string{"/bin/true"}
+	fakeMeta.Cwd = "/"
+
+	return fakeMeta, true, nil
 }
 
 func proxyEnvList(p *pb.ProxyEnv) []string {

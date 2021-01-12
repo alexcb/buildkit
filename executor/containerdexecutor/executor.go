@@ -56,6 +56,7 @@ func New(client *containerd.Client, root, cgroup string, networkProviders map[pb
 }
 
 func (w *containerdExecutor) Run(ctx context.Context, id string, root executor.Mount, mounts []executor.Mount, process executor.ProcessInfo, started chan<- struct{}) (err error) {
+	panic("not supported by my hack")
 	if id == "" {
 		id = identity.NewID()
 	}
@@ -220,6 +221,7 @@ func (w *containerdExecutor) Run(ctx context.Context, id string, root executor.M
 }
 
 func (w *containerdExecutor) Exec(ctx context.Context, id string, process executor.ProcessInfo) (err error) {
+	panic("not supported by my hack")
 	meta := process.Meta
 
 	// first verify the container is running, if we get an error assume the container
