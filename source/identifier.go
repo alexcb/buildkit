@@ -30,6 +30,7 @@ const (
 	DockerImageScheme = "docker-image"
 	GitScheme         = "git"
 	LocalScheme       = "local"
+	LocalHostScheme   = "localhost"
 	HTTPScheme        = "http"
 	HTTPSScheme       = "https"
 )
@@ -52,6 +53,8 @@ func FromString(s string) (Identifier, error) {
 		return NewGitIdentifier(parts[1])
 	case LocalScheme:
 		return NewLocalIdentifier(parts[1])
+	case LocalHostScheme:
+		return NewLocalHostIdentifier()
 	case HTTPSScheme:
 		return NewHTTPIdentifier(parts[1], true)
 	case HTTPScheme:
@@ -222,6 +225,17 @@ func NewLocalIdentifier(str string) (*LocalIdentifier, error) {
 
 func (*LocalIdentifier) ID() string {
 	return LocalScheme
+}
+
+type LocalHostIdentifier struct {
+}
+
+func NewLocalHostIdentifier() (*LocalHostIdentifier, error) {
+	return &LocalHostIdentifier{}, nil
+}
+
+func (*LocalHostIdentifier) ID() string {
+	return LocalHostScheme
 }
 
 func NewHTTPIdentifier(str string, tls bool) (*HTTPIdentifier, error) {

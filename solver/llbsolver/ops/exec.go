@@ -11,6 +11,8 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/moby/buildkit/executor/localhostexecutor"
+
 	"github.com/containerd/containerd/platforms"
 	"github.com/moby/buildkit/cache"
 	"github.com/moby/buildkit/cache/metadata"
@@ -22,6 +24,7 @@ import (
 	"github.com/moby/buildkit/solver/llbsolver/errdefs"
 	"github.com/moby/buildkit/solver/llbsolver/mounts"
 	"github.com/moby/buildkit/solver/pb"
+	//"github.com/moby/buildkit/util/contextutil"
 	"github.com/moby/buildkit/util/progress/logs"
 	utilsystem "github.com/moby/buildkit/util/system"
 	"github.com/moby/buildkit/worker"
@@ -47,6 +50,11 @@ func NewExecOp(v solver.Vertex, op *pb.Op_Exec, platform *pb.Platform, cm cache.
 	if err := llbsolver.ValidateOp(&pb.Op{Op: op}); err != nil {
 		return nil, err
 	}
+
+	if lhe, ok := exec.(*localhostexecutor.LocalhostExecutor); ok {
+		lhe.SetSessionManager(sm)
+	}
+
 	name := fmt.Sprintf("exec %s", strings.Join(op.Exec.Meta.Args, " "))
 	return &execOp{
 		op:        op.Exec,
@@ -215,6 +223,15 @@ func addDefaultEnvvar(env []string, k, v string) []string {
 }
 
 func (e *execOp) Exec(ctx context.Context, g session.Group, inputs []solver.Result) (results []solver.Result, err error) {
+	for _, x := range inputs {
+		fmt.Printf("%v\n", x.ID())
+		fmt.Printf("%T\n", x.Sys())
+		xx, ok := x.Sys().(*worker.WorkerRef)
+		if !ok {
+			return nil, errors.Errorf("invalid reference for exec %T", x.Sys())
+		}
+		fmt.Printf("sub ref: %v\n", xx.ID())
+	}
 	refs := make([]*worker.WorkerRef, len(inputs))
 	for i, inp := range inputs {
 		var ok bool
@@ -228,6 +245,7 @@ func (e *execOp) Exec(ctx context.Context, g session.Group, inputs []solver.Resu
 		desc := fmt.Sprintf("mount %s from exec %s", m.Dest, strings.Join(e.op.Meta.Args, " "))
 		return e.cm.New(ctx, ref, g, cache.WithDescription(desc))
 	})
+
 	defer func() {
 		if err != nil {
 			execInputs := make([]solver.Result, len(e.op.Mounts))
@@ -311,6 +329,12 @@ func (e *execOp) Exec(ctx context.Context, g session.Group, inputs []solver.Resu
 	defer stdout.Close()
 	defer stderr.Close()
 
+	// TODO move this logic elsewhere
+
+	if lhe, ok := e.exec.(*localhostexecutor.LocalhostExecutor); ok {
+		lhe.SetSessionGroup(g)
+	}
+	//contextutil.PrintContextValues(ctx)
 	execErr := e.exec.Run(ctx, "", p.Root, p.Mounts, executor.ProcessInfo{
 		Meta:   meta,
 		Stdin:  nil,

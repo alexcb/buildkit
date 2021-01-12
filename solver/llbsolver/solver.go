@@ -6,6 +6,9 @@ import (
 	"strings"
 	"time"
 
+	"github.com/moby/buildkit/executor/localhostexecutor"
+	"github.com/moby/buildkit/solver/pb"
+
 	"github.com/moby/buildkit/cache"
 	"github.com/moby/buildkit/cache/remotecache"
 	"github.com/moby/buildkit/client"
@@ -73,6 +76,45 @@ func (s *Solver) resolver() solver.ResolveOpFunc {
 		if err != nil {
 			return nil, err
 		}
+
+		// TODO only override when the base image is for llb.localhost()
+
+		override := false
+		if baseOp, ok := v.Sys().(*pb.Op); ok {
+			override = true
+			switch op := baseOp.Op.(type) {
+			case *pb.Op_Exec:
+				for _, mnt := range op.Exec.Mounts {
+					if mnt.Dest == "/run_on_localhost_hack" {
+						override = true
+						fmt.Printf("found /run_on_localhost_hack; overriding worker\n")
+					}
+				}
+			}
+		}
+
+		if override {
+			if !v.Options().IgnoreCache {
+				return nil, fmt.Errorf("run_on_localhost_hack mount found but IgnoreCache was not specified")
+			}
+
+			workers, err := s.workerController.List()
+			if err != nil {
+				return nil, err
+			}
+			for _, x := range workers {
+				if strings.Contains(fmt.Sprintf("%v", x.Labels()), "localhost") {
+					fmt.Printf("(1) overriding worker to: %v\n", x)
+					executor := x.Executor()
+					if lhe, ok := executor.(*localhostexecutor.LocalhostExecutor); ok {
+						lhe.SetSessionManager(s.sm)
+					}
+					w = x
+					break
+				}
+			}
+		}
+
 		return w.ResolveOp(v, s.Bridge(b), s.sm)
 	}
 }

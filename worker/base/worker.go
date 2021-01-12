@@ -41,6 +41,7 @@ import (
 	"github.com/moby/buildkit/source/git"
 	"github.com/moby/buildkit/source/http"
 	"github.com/moby/buildkit/source/local"
+	"github.com/moby/buildkit/source/localhost"
 	"github.com/moby/buildkit/util/archutil"
 	"github.com/moby/buildkit/util/progress"
 	"github.com/moby/buildkit/util/progress/controller"
@@ -124,7 +125,6 @@ func NewWorker(opt WorkerOpt) (*Worker, error) {
 	if err != nil {
 		return nil, err
 	}
-
 	sm.Register(is)
 
 	if err := git.Supported(); err == nil {
@@ -147,7 +147,6 @@ func NewWorker(opt WorkerOpt) (*Worker, error) {
 	if err != nil {
 		return nil, err
 	}
-
 	sm.Register(hs)
 
 	ss, err := local.NewSource(local.Opt{
@@ -158,6 +157,15 @@ func NewWorker(opt WorkerOpt) (*Worker, error) {
 		return nil, err
 	}
 	sm.Register(ss)
+
+	lh, err := localhost.NewSource(localhost.Opt{
+		CacheAccessor: cm,
+		MetadataStore: opt.MetadataStore,
+	})
+	if err != nil {
+		return nil, err
+	}
+	sm.Register(lh)
 
 	iw, err := imageexporter.NewImageWriter(imageexporter.WriterOpt{
 		Snapshotter:  opt.Snapshotter,
@@ -263,6 +271,7 @@ func (w *Worker) ResolveOp(v solver.Vertex, s frontend.FrontendLLBBridge, sm *se
 		case *pb.Op_Source:
 			return ops.NewSourceOp(v, op, baseOp.Platform, w.SourceManager, sm, w)
 		case *pb.Op_Exec:
+			fmt.Printf("creating NewExecOp for w.WorkerOpt.Executor\n")
 			return ops.NewExecOp(v, op, baseOp.Platform, w.CacheMgr, sm, w.WorkerOpt.MetadataStore, w.WorkerOpt.Executor, w)
 		case *pb.Op_File:
 			return ops.NewFileOp(v, op, w.CacheMgr, w.WorkerOpt.MetadataStore, w)
