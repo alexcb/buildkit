@@ -14,6 +14,8 @@ import (
 	//"syscall"
 	//"time"
 
+	"github.com/moby/buildkit/session"
+
 	//"github.com/containerd/containerd/mount"
 	//containerdoci "github.com/containerd/containerd/oci"
 	//"github.com/containerd/continuity/fs"
@@ -21,6 +23,7 @@ import (
 	"github.com/docker/docker/pkg/idtools"
 	"github.com/moby/buildkit/executor"
 	"github.com/moby/buildkit/executor/oci"
+	"github.com/moby/buildkit/session/localhost"
 	//"github.com/moby/buildkit/frontend/gateway/errdefs"
 	//"github.com/moby/buildkit/identity"
 	//"github.com/moby/buildkit/solver/pb"
@@ -51,7 +54,7 @@ type Opt struct {
 
 var defaultCommandCandidates = []string{"buildkit-runc", "runc"}
 
-type localhostExecutor struct {
+type LocalhostExecutor struct {
 	//runc             *runc.Runc
 	//root             string
 	//cgroupParent     string
@@ -64,10 +67,13 @@ type localhostExecutor struct {
 	//oomScoreAdj      *int
 	//running          map[string]chan error
 	//mu               sync.Mutex
+	sm *session.Manager
+	g  session.Group
 }
 
 func New() (executor.Executor, error) {
-	return &localhostExecutor{}, nil
+	fmt.Printf("creating new LocalhostExecutor\n")
+	return &LocalhostExecutor{}, nil
 	//cmds := opt.CommandCandidates
 	//if cmds == nil {
 	//	cmds = defaultCommandCandidates
@@ -131,18 +137,41 @@ func New() (executor.Executor, error) {
 	//return w, nil
 }
 
-func (w *localhostExecutor) Run(ctx context.Context, id string, root executor.Mount, mounts []executor.Mount, process executor.ProcessInfo, started chan<- struct{}) (err error) {
+func (w *LocalhostExecutor) Run(ctx context.Context, id string, root executor.Mount, mounts []executor.Mount, process executor.ProcessInfo, started chan<- struct{}) error {
 	meta := process.Meta
-	fmt.Printf("entered localhostExecutor.Run with %v; root: %v, mounts: %v; pid: %v\n%s\n", meta, root, mounts, os.Getpid(), debug.Stack())
-	process.Stdout.Write([]byte(fmt.Sprintf("TODO: perform the run call for %v\n", meta)))
+	fmt.Printf("entered LocalhostExecutor.Run with %v; root: %v, mounts: %v; pid: %v\n%s\n", meta, root, mounts, os.Getpid(), debug.Stack())
+	if len(mounts) > 0 {
+		return fmt.Errorf("LocalhostExecutor does not support mounts")
+	}
+
+	err := w.sm.Any(ctx, w.g, func(ctx context.Context, _ string, caller session.Caller) error {
+		err := localhost.LocalhostExec(ctx, caller, process)
+		if err != nil {
+			return err
+		}
+		return nil
+	})
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (w *LocalhostExecutor) Exec(ctx context.Context, id string, process executor.ProcessInfo) (err error) {
+	meta := process.Meta
+	fmt.Printf("entered LocalhostExecutor.Exec with %v\n", meta)
+	process.Stdout.Write([]byte(fmt.Sprintf("TODO: perform the exec call for %v\n", meta)))
 	process.Stdout.Close()
 	return nil
 }
 
-func (w *localhostExecutor) Exec(ctx context.Context, id string, process executor.ProcessInfo) (err error) {
-	meta := process.Meta
-	fmt.Printf("entered localhostExecutor.Exec with %v\n", meta)
-	process.Stdout.Write([]byte(fmt.Sprintf("TODO: perform the exec call for %v\n", meta)))
-	process.Stdout.Close()
-	return nil
+func (w *LocalhostExecutor) SetSessionManager(sm *session.Manager) {
+	fmt.Printf("set the session manager to %v from \n%s\n", sm, debug.Stack())
+	w.sm = sm
+}
+
+func (w *LocalhostExecutor) SetSessionGroup(g session.Group) {
+	fmt.Printf("set the group to %v from \n%s\n", g, debug.Stack())
+	w.g = g
 }

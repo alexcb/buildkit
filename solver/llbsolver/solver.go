@@ -6,6 +6,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/moby/buildkit/executor/localhostexecutor"
+
 	"github.com/moby/buildkit/cache"
 	"github.com/moby/buildkit/cache/remotecache"
 	"github.com/moby/buildkit/client"
@@ -81,8 +83,13 @@ func (s *Solver) resolver() solver.ResolveOpFunc {
 		}
 		for _, x := range workers {
 			if strings.Contains(fmt.Sprintf("%v", x.Labels()), "localhost") {
-				fmt.Printf("overriding worker to: %v\n", x)
+				fmt.Printf("overriding worker to: %v (1)\n", x)
+				executor := x.Executor()
+				if lhe, ok := executor.(*localhostexecutor.LocalhostExecutor); ok {
+					lhe.SetSessionManager(s.sm)
+				}
 				w = x
+				break
 			}
 		}
 

@@ -243,7 +243,7 @@ func (c *Controller) Solve(ctx context.Context, req *controlapi.SolveRequest) (*
 	}
 	for _, x := range workers {
 		if strings.Contains(fmt.Sprintf("%v", x.Labels()), "localhost") {
-			fmt.Printf("overriding worker to: %v\n", x)
+			fmt.Printf("overriding worker to: %v (2)\n", x)
 			w = x
 		}
 	}

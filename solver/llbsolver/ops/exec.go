@@ -12,6 +12,8 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/moby/buildkit/executor/localhostexecutor"
+
 	"github.com/containerd/containerd/platforms"
 	"github.com/moby/buildkit/cache"
 	"github.com/moby/buildkit/cache/metadata"
@@ -23,6 +25,7 @@ import (
 	"github.com/moby/buildkit/solver/llbsolver/errdefs"
 	"github.com/moby/buildkit/solver/llbsolver/mounts"
 	"github.com/moby/buildkit/solver/pb"
+	//"github.com/moby/buildkit/util/contextutil"
 	"github.com/moby/buildkit/util/progress/logs"
 	utilsystem "github.com/moby/buildkit/util/system"
 	"github.com/moby/buildkit/worker"
@@ -49,6 +52,11 @@ func NewExecOp(v solver.Vertex, op *pb.Op_Exec, platform *pb.Platform, cm cache.
 		return nil, err
 	}
 	fmt.Printf("creating new exec for %s\n%s\nusing worker %v (%v)", strings.Join(op.Exec.Meta.Args, " "), debug.Stack(), w, w.Labels())
+
+	if lhe, ok := exec.(*localhostexecutor.LocalhostExecutor); ok {
+		lhe.SetSessionManager(sm)
+	}
+
 	name := fmt.Sprintf("exec %s", strings.Join(op.Exec.Meta.Args, " "))
 	return &execOp{
 		op:        op.Exec,
@@ -330,6 +338,13 @@ func (e *execOp) Exec(ctx context.Context, g session.Group, inputs []solver.Resu
 
 	fmt.Printf("exec.go:here3 %v %v %v\n", meta, e.exec, p.Root)
 	fmt.Printf("exec.go:here4 passing ops/exec.go on %v to e.exec.Run (%v %v root=%v)\n", meta, e.exec, e.exec.Run, p.Root)
+
+	// TODO move this logic elsewhere
+
+	if lhe, ok := e.exec.(*localhostexecutor.LocalhostExecutor); ok {
+		lhe.SetSessionGroup(g)
+	}
+	//contextutil.PrintContextValues(ctx)
 	execErr := e.exec.Run(ctx, "", p.Root, p.Mounts, executor.ProcessInfo{
 		Meta:   meta,
 		Stdin:  nil,
