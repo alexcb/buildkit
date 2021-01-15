@@ -55,18 +55,6 @@ type Opt struct {
 var defaultCommandCandidates = []string{"buildkit-runc", "runc"}
 
 type LocalhostExecutor struct {
-	//runc             *runc.Runc
-	//root             string
-	//cgroupParent     string
-	//rootless         bool
-	//networkProviders map[pb.NetMode]network.Provider
-	//processMode      oci.ProcessMode
-	//idmap            *idtools.IdentityMapping
-	//noPivot          bool
-	//dns              *oci.DNSConfig
-	//oomScoreAdj      *int
-	//running          map[string]chan error
-	//mu               sync.Mutex
 	sm *session.Manager
 	g  session.Group
 }
@@ -74,67 +62,6 @@ type LocalhostExecutor struct {
 func New() (executor.Executor, error) {
 	fmt.Printf("creating new LocalhostExecutor\n")
 	return &LocalhostExecutor{}, nil
-	//cmds := opt.CommandCandidates
-	//if cmds == nil {
-	//	cmds = defaultCommandCandidates
-	//}
-
-	//var cmd string
-	//var found bool
-	//for _, cmd = range cmds {
-	//	if _, err := exec.LookPath(cmd); err == nil {
-	//		found = true
-	//		break
-	//	}
-	//}
-	//if !found {
-	//	return nil, errors.Errorf("failed to find %s binary", cmd)
-	//}
-
-	//root := opt.Root
-
-	//if err := os.MkdirAll(root, 0711); err != nil {
-	//	return nil, errors.Wrapf(err, "failed to create %s", root)
-	//}
-
-	//root, err := filepath.Abs(root)
-	//if err != nil {
-	//	return nil, err
-	//}
-	//root, err = filepath.EvalSymlinks(root)
-	//if err != nil {
-	//	return nil, err
-	//}
-
-	//// clean up old hosts/resolv.conf file. ignore errors
-	//os.RemoveAll(filepath.Join(root, "hosts"))
-	//os.RemoveAll(filepath.Join(root, "resolv.conf"))
-
-	//runtime := &runc.Runc{
-	//	Command:   cmd,
-	//	Log:       filepath.Join(root, "runc-log.json"),
-	//	LogFormat: runc.JSON,
-	//	Setpgid:   true,
-	//	// we don't execute runc with --rootless=(true|false) explicitly,
-	//	// so as to support non-runc runtimes
-	//}
-
-	//updateRuncFieldsForHostOS(runtime)
-
-	//w := &runcExecutor{
-	//	runc:             runtime,
-	//	root:             root,
-	//	cgroupParent:     opt.DefaultCgroupParent,
-	//	rootless:         opt.Rootless,
-	//	networkProviders: networkProviders,
-	//	processMode:      opt.ProcessMode,
-	//	idmap:            opt.IdentityMapping,
-	//	noPivot:          opt.NoPivot,
-	//	dns:              opt.DNS,
-	//	oomScoreAdj:      opt.OOMScoreAdj,
-	//	running:          make(map[string]chan error),
-	//}
-	//return w, nil
 }
 
 func (w *LocalhostExecutor) Run(ctx context.Context, id string, root executor.Mount, mounts []executor.Mount, process executor.ProcessInfo, started chan<- struct{}) error {
@@ -159,11 +86,7 @@ func (w *LocalhostExecutor) Run(ctx context.Context, id string, root executor.Mo
 }
 
 func (w *LocalhostExecutor) Exec(ctx context.Context, id string, process executor.ProcessInfo) (err error) {
-	meta := process.Meta
-	fmt.Printf("entered LocalhostExecutor.Exec with %v\n", meta)
-	process.Stdout.Write([]byte(fmt.Sprintf("TODO: perform the exec call for %v\n", meta)))
-	process.Stdout.Close()
-	return nil
+	panic("LocalhostExecutor.Exec is not implemented")
 }
 
 func (w *LocalhostExecutor) SetSessionManager(sm *session.Manager) {
