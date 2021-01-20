@@ -95,7 +95,7 @@ func (s *Solver) resolver() solver.ResolveOpFunc {
 
 		if override {
 			if !v.Options().IgnoreCache {
-				return nil, fmt.Errorf("run_on_localhost_hack mount found but IgnoreCache was not specified")
+				return nil, fmt.Errorf("run_on_localhost_hack mount found but IgnoreCache was not specified for %v", v.Name())
 			}
 
 			workers, err := s.workerController.List()
