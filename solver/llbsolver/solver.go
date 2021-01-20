@@ -81,7 +81,6 @@ func (s *Solver) resolver() solver.ResolveOpFunc {
 
 		override := false
 		if baseOp, ok := v.Sys().(*pb.Op); ok {
-			override = true
 			switch op := baseOp.Op.(type) {
 			case *pb.Op_Exec:
 				for _, mnt := range op.Exec.Mounts {
