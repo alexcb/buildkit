@@ -108,7 +108,7 @@ func (s *Solver) resolver() solver.ResolveOpFunc {
 					if lhe, ok := executor.(*localhostexecutor.LocalhostExecutor); ok {
 						lhe.SetSessionManager(s.sm)
 					}
-					w = x
+					//w = x
 					break
 				}
 			}

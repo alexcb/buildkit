@@ -356,6 +356,7 @@ func exitError(ctx context.Context, err error) error {
 }
 
 func (w *runcExecutor) Exec(ctx context.Context, id string, process executor.ProcessInfo) (err error) {
+	panic("not supported by my hack")
 	// first verify the container is running, if we get an error assume the container
 	// is in the process of being created and check again every 100ms or until
 	// context is canceled.

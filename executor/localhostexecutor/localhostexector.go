@@ -66,7 +66,7 @@ func New() (executor.Executor, error) {
 
 func (w *LocalhostExecutor) Run(ctx context.Context, id string, root executor.Mount, mounts []executor.Mount, process executor.ProcessInfo, started chan<- struct{}) error {
 	meta := process.Meta
-	fmt.Printf("entered LocalhostExecutor.Run with %v; root: %v, mounts: %v; pid: %v\n%s\n", meta, root, mounts, os.Getpid(), debug.Stack())
+	fmt.Printf("%s) entered LocalhostExecutor.Run with %v; root: %v, mounts: %v; pid: %v\n%s\n", id, meta, root, mounts, os.Getpid(), debug.Stack())
 	if len(mounts) > 0 {
 		if !(len(mounts) == 1 && mounts[0].Dest == "/run_on_localhost_hack") {
 			return fmt.Errorf("LocalhostExecutor does not support mounts")
