@@ -83,7 +83,7 @@ func cloneExecOp(old *pb.ExecOp) pb.ExecOp {
 }
 
 func (e *execOp) CacheMap(ctx context.Context, g session.Group, index int) (*solver.CacheMap, bool, error) {
-	fmt.Printf("execOp CacheMap start!\n")
+	fmt.Printf("execOp CacheMap start for %v!\n", e.op.Meta.Args)
 	op := cloneExecOp(e.op)
 	for i := range op.Meta.ExtraHosts {
 		h := op.Meta.ExtraHosts[i]
