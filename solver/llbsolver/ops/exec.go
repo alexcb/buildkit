@@ -83,6 +83,7 @@ func cloneExecOp(old *pb.ExecOp) pb.ExecOp {
 }
 
 func (e *execOp) CacheMap(ctx context.Context, g session.Group, index int) (*solver.CacheMap, bool, error) {
+	fmt.Printf("execOp CacheMap start!\n")
 	op := cloneExecOp(e.op)
 	for i := range op.Meta.ExtraHosts {
 		h := op.Meta.ExtraHosts[i]
@@ -143,7 +144,7 @@ func (e *execOp) CacheMap(ctx context.Context, g session.Group, index int) (*sol
 			cm.Deps[i].Selector = digest.FromBytes(bytes.Join(dgsts, []byte{0}))
 		}
 		if !dep.NoContentBasedHash {
-			fmt.Printf("calling NewContentHashFunc here1\n")
+			fmt.Printf("creating NewContentHashFunc here1\n")
 			cm.Deps[i].ComputeDigestFunc = llbsolver.NewContentHashFunc(toSelectors(dedupePaths(dep.Selectors)))
 		}
 		cm.Deps[i].PreprocessFunc = llbsolver.UnlazyResultFunc

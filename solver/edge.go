@@ -2,6 +2,7 @@ package solver
 
 import (
 	"context"
+	"fmt"
 	"sync"
 	"time"
 
@@ -823,6 +824,7 @@ func (e *edge) createInputRequests(desiredState edgeStatusType, f *pipeFactory, 
 			res := dep.result
 			func(pfn PreprocessFunc, fn ResultBasedCacheFunc, res Result, index Index) {
 				dep.slowCacheReq = f.NewFuncRequest(func(ctx context.Context) (interface{}, error) {
+					fmt.Printf("calling calcSolwCache for %v\n", index)
 					v, err := e.op.CalcSlowCache(ctx, index, pfn, fn, res)
 					return v, errors.Wrap(err, "failed to compute cache key")
 				})

@@ -147,6 +147,7 @@ func (f *fileOp) CacheMap(ctx context.Context, g session.Group, index int) (*sol
 		})
 		cm.Deps[idx].Selector = digest.FromBytes(bytes.Join(dgsts, []byte{0}))
 
+		fmt.Printf("creating NewContentHashFunc here2\n")
 		cm.Deps[idx].ComputeDigestFunc = llbsolver.NewContentHashFunc(dedupeSelectors(m))
 	}
 	for idx := range cm.Deps {
