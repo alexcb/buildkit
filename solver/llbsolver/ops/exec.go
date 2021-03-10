@@ -85,10 +85,6 @@ func cloneExecOp(old *pb.ExecOp) pb.ExecOp {
 func (e *execOp) CacheMap(ctx context.Context, g session.Group, index int) (*solver.CacheMap, bool, error) {
 	fmt.Printf("execOp CacheMap start for %v!\n", e.op.Meta.Args)
 
-	if isLocalHack(e.op.Meta.Args) {
-		return nil, false, nil
-	}
-
 	op := cloneExecOp(e.op)
 	for i := range op.Meta.ExtraHosts {
 		h := op.Meta.ExtraHosts[i]
@@ -133,6 +129,10 @@ func (e *execOp) CacheMap(ctx context.Context, g session.Group, index int) (*sol
 			ComputeDigestFunc solver.ResultBasedCacheFunc
 			PreprocessFunc    solver.PreprocessFunc
 		}, e.numInputs),
+	}
+
+	if isLocalHack(e.op.Meta.Args) {
+		return cm, false, nil
 	}
 
 	deps, err := e.getMountDeps()
