@@ -35,7 +35,10 @@ func UnlazyResultFunc(ctx context.Context, res solver.Result, g session.Group) e
 }
 
 func NewContentHashFunc(selectors []Selector) solver.ResultBasedCacheFunc {
-	//fmt.Printf("NewContentHashFunc called by %s\n", debug.Stack())
+	for _, sel := range selectors {
+		fmt.Printf("NewContentHashFunc %v\n", sel.Path)
+	}
+	//fmt.Printf("NewContentHashFunc %v called by %s\n", selectors, debug.Stack())
 	return func(ctx context.Context, res solver.Result, s session.Group) (digest.Digest, error) {
 		ref, ok := res.Sys().(*worker.WorkerRef)
 		if !ok {
