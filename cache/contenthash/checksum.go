@@ -8,6 +8,7 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"runtime/debug"
 	"sync"
 
 	"github.com/docker/docker/pkg/idtools"
@@ -736,6 +737,8 @@ func (cc *cacheContext) scanPath(ctx context.Context, m *mount, p string) (retEr
 	if err != nil {
 		return err
 	}
+
+	fmt.Printf("scanPath called by %s\n", debug.Stack())
 
 	err = filepath.Walk(parentPath, func(path string, fi os.FileInfo, err error) error {
 		if err != nil {
