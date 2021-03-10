@@ -3,7 +3,7 @@ package llbsolver
 import (
 	"bytes"
 	"context"
-	//"fmt"
+	"fmt"
 	"path"
 	//"runtime/debug"
 
@@ -54,12 +54,14 @@ func NewContentHashFunc(selectors []Selector) solver.ResultBasedCacheFunc {
 			i, sel := i, sel
 			eg.Go(func() error {
 				if !sel.Wildcard {
+					fmt.Printf("doing stuff with %q\n", path.Join("/", sel.Path))
 					dgst, err := contenthash.Checksum(ctx, ref.ImmutableRef, path.Join("/", sel.Path), sel.FollowLinks, s)
 					if err != nil {
 						return err
 					}
 					dgsts[i] = []byte(dgst)
 				} else {
+					fmt.Printf("doing stuff2 with %q\n", path.Join("/", sel.Path))
 					dgst, err := contenthash.ChecksumWildcard(ctx, ref.ImmutableRef, path.Join("/", sel.Path), sel.FollowLinks, s)
 					if err != nil {
 						return err
