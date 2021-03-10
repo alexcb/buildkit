@@ -143,6 +143,7 @@ func (e *execOp) CacheMap(ctx context.Context, g session.Group, index int) (*sol
 			cm.Deps[i].Selector = digest.FromBytes(bytes.Join(dgsts, []byte{0}))
 		}
 		if !dep.NoContentBasedHash {
+			fmt.Printf("calling NewContentHashFunc\n")
 			cm.Deps[i].ComputeDigestFunc = llbsolver.NewContentHashFunc(toSelectors(dedupePaths(dep.Selectors)))
 		}
 		cm.Deps[i].PreprocessFunc = llbsolver.UnlazyResultFunc
