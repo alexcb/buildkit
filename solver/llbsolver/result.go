@@ -3,9 +3,9 @@ package llbsolver
 import (
 	"bytes"
 	"context"
-	"fmt"
+	//"fmt"
 	"path"
-	"runtime/debug"
+	//"runtime/debug"
 
 	"github.com/moby/buildkit/cache/contenthash"
 	"github.com/moby/buildkit/session"
