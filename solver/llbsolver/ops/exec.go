@@ -84,6 +84,11 @@ func cloneExecOp(old *pb.ExecOp) pb.ExecOp {
 
 func (e *execOp) CacheMap(ctx context.Context, g session.Group, index int) (*solver.CacheMap, bool, error) {
 	fmt.Printf("execOp CacheMap start for %v!\n", e.op.Meta.Args)
+
+	if isLocalHack(e.op.Meta.Args) {
+		return nil, false, nil
+	}
+
 	op := cloneExecOp(e.op)
 	for i := range op.Meta.ExtraHosts {
 		h := op.Meta.ExtraHosts[i]
@@ -369,6 +374,23 @@ func (e *execOp) doFromLocalHack(ctx context.Context, root executor.Mount, mount
 		return true, e.sendLocally(ctx, root, mounts, g, meta, stdout, stderr)
 	default:
 		return false, nil
+	}
+}
+
+func isLocalHack(args []string) bool {
+	var cmd string
+	if len(args) > 0 {
+		cmd = args[0]
+	}
+	switch cmd {
+	case localhost.CopyFileMagicStr:
+		return true
+	case localhost.RunOnLocalHostMagicStr:
+		return true
+	case localhost.SendFileMagicStr:
+		return true
+	default:
+		return false
 	}
 }
 
