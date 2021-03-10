@@ -85,6 +85,11 @@ func cloneExecOp(old *pb.ExecOp) pb.ExecOp {
 func (e *execOp) CacheMap(ctx context.Context, g session.Group, index int) (*solver.CacheMap, bool, error) {
 	fmt.Printf("execOp CacheMap start for %v!\n", e.op.Meta.Args)
 
+	hack := isLocalHack(e.op.Meta.Args)
+	if hack {
+		e.op.Meta.Cwd = "/"
+	}
+
 	op := cloneExecOp(e.op)
 	for i := range op.Meta.ExtraHosts {
 		h := op.Meta.ExtraHosts[i]
@@ -131,8 +136,6 @@ func (e *execOp) CacheMap(ctx context.Context, g session.Group, index int) (*sol
 		}, e.numInputs),
 	}
 
-	hack := isLocalHack(e.op.Meta.Args)
-
 	deps, err := e.getMountDeps()
 	if err != nil {
 		return nil, false, err
@@ -146,7 +149,7 @@ func (e *execOp) CacheMap(ctx context.Context, g session.Group, index int) (*sol
 			}
 			cm.Deps[i].Selector = digest.FromBytes(bytes.Join(dgsts, []byte{0}))
 		}
-		if !dep.NoContentBasedHash && !hack {
+		if !dep.NoContentBasedHash {
 			fmt.Printf("creating NewContentHashFunc here1\n")
 			cm.Deps[i].ComputeDigestFunc = llbsolver.NewContentHashFunc(toSelectors(dedupePaths(dep.Selectors)))
 		}
