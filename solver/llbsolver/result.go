@@ -3,7 +3,9 @@ package llbsolver
 import (
 	"bytes"
 	"context"
+	"fmt"
 	"path"
+	"runtime/debug"
 
 	"github.com/moby/buildkit/cache/contenthash"
 	"github.com/moby/buildkit/session"
@@ -33,6 +35,7 @@ func UnlazyResultFunc(ctx context.Context, res solver.Result, g session.Group) e
 }
 
 func NewContentHashFunc(selectors []Selector) solver.ResultBasedCacheFunc {
+	fmt.Printf("NewContentHashFunc called by %s\n", debug.Stack())
 	return func(ctx context.Context, res solver.Result, s session.Group) (digest.Digest, error) {
 		ref, ok := res.Sys().(*worker.WorkerRef)
 		if !ok {
