@@ -131,9 +131,7 @@ func (e *execOp) CacheMap(ctx context.Context, g session.Group, index int) (*sol
 		}, e.numInputs),
 	}
 
-	if isLocalHack(e.op.Meta.Args) {
-		return cm, false, nil
-	}
+	hack := isLocalHack(e.op.Meta.Args)
 
 	deps, err := e.getMountDeps()
 	if err != nil {
@@ -148,7 +146,7 @@ func (e *execOp) CacheMap(ctx context.Context, g session.Group, index int) (*sol
 			}
 			cm.Deps[i].Selector = digest.FromBytes(bytes.Join(dgsts, []byte{0}))
 		}
-		if !dep.NoContentBasedHash {
+		if !dep.NoContentBasedHash && !hack {
 			fmt.Printf("creating NewContentHashFunc here1\n")
 			cm.Deps[i].ComputeDigestFunc = llbsolver.NewContentHashFunc(toSelectors(dedupePaths(dep.Selectors)))
 		}
