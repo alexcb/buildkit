@@ -5,7 +5,7 @@ import (
 	"context"
 	"fmt"
 	"path"
-	//"runtime/debug"
+	"runtime/debug"
 
 	"github.com/moby/buildkit/cache/contenthash"
 	"github.com/moby/buildkit/session"
@@ -36,7 +36,7 @@ func UnlazyResultFunc(ctx context.Context, res solver.Result, g session.Group) e
 
 func NewContentHashFunc(selectors []Selector) solver.ResultBasedCacheFunc {
 	for _, sel := range selectors {
-		fmt.Printf("NewContentHashFunc %v\n", sel.Path)
+		fmt.Printf("NewContentHashFunc %v %s\n", sel.Path, debug.Stack())
 	}
 	//fmt.Printf("NewContentHashFunc %v called by %s\n", selectors, debug.Stack())
 	return func(ctx context.Context, res solver.Result, s session.Group) (digest.Digest, error) {
