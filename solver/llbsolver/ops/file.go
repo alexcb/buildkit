@@ -7,7 +7,9 @@ import (
 	"fmt"
 	"path"
 	"runtime"
+	"runtime/debug"
 	"sort"
+	"strings"
 	"sync"
 
 	"github.com/moby/buildkit/cache"
