@@ -51,7 +51,9 @@ func NewFileOp(v solver.Vertex, op *pb.Op_File, cm cache.Manager, md *metadata.S
 
 func (f *fileOp) CacheMap(ctx context.Context, g session.Group, index int) (*solver.CacheMap, bool, error) {
 
-	fmt.Printf("CacheMap %v\n", f.op.Actions)
+	if strings.Contains(fmt.Sprintf("%v", f.op.Actions), "alex") {
+		fmt.Printf("CacheMap %v from %s\n", f.op.Actions, debug.Stack())
+	}
 
 	selectors := map[int]map[llbsolver.Selector]struct{}{}
 	invalidSelectors := map[int]struct{}{}
