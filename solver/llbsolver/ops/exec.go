@@ -85,10 +85,10 @@ func cloneExecOp(old *pb.ExecOp) pb.ExecOp {
 func (e *execOp) CacheMap(ctx context.Context, g session.Group, index int) (*solver.CacheMap, bool, error) {
 	fmt.Printf("execOp CacheMap start for %v!\n", e.op.Meta.Args)
 
-	hack := isLocalHack(e.op.Meta.Args)
-	if hack {
-		e.op.Meta.Cwd = "/"
-	}
+	//hack := isLocalHack(e.op.Meta.Args)
+	//if hack {
+	//	e.op.Meta.Cwd = "/"
+	//}
 
 	op := cloneExecOp(e.op)
 	for i := range op.Meta.ExtraHosts {
