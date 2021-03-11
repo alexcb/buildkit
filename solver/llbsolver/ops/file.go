@@ -95,6 +95,7 @@ func (f *fileOp) CacheMap(ctx context.Context, g session.Group, index int) (*sol
 			markInvalid(action.Input)
 			processOwner(p.Owner, selectors)
 			if action.SecondaryInput != -1 && int(action.SecondaryInput) < f.numInputs {
+				fmt.Printf("adding selector %v\n", p.Src)
 				addSelector(selectors, int(action.SecondaryInput), p.Src, p.AllowWildcard, p.FollowSymlink)
 				p.Src = path.Base(p.Src)
 			}
